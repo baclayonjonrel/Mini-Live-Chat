@@ -1,0 +1,12 @@
+# Uncomment the next line to define a global platform for your project
+
+source 'https://github.com/skyway/skyway-ios-sdk-specs.git'
+source 'https://github.com/skyway/skyway-ios-webrtc-specs.git'
+
+target 'Mini Live Chat' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  pod 'SkyWayRoom'
+  
+end

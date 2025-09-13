@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Socket.IO Test with REST</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <input id="msg" placeholder="Type message">
+  <button onclick="sendMessage()">Send</button>
+
+  <ul id="messages"></ul>
+
+  <script>
+    const socket = io("http://localhost:3000"); // Socket.IO server
+    const apiUrl = "http://localhost:4000";      // REST API server
+
+    const messagesEl = document.getElementById("messages");
+    const inputEl = document.getElementById("msg");
+
+    // Fetch previous messages from REST API
+    async function fetchMessages() {
+      try {
+        const res = await fetch(`${apiUrl}/messages`);
+        const messages = await res.json();
+        messages.forEach(msg => {
+          addMessage(`${msg.senderId}: ${msg.text}`);
+        });
+      } catch (err) {
+        console.error("Failed to fetch messages:", err);
+      }
+    }
+
+    // Add message to the UI
+    function addMessage(text) {
+      const li = document.createElement("li");
+      li.textContent = text;
+      messagesEl.appendChild(li);
+    }
+
+    // Send new message
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      // Send via REST API to save
+      try {
+        const res = await fetch(`${apiUrl}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ senderId: "user1", text })
+        });
+        const savedMsg = await res.json();
+
+        // Optionally broadcast via Socket.IO (server can emit)
+        socket.emit("chat message", `${savedMsg.senderId}: ${savedMsg.text}`);
+      } catch (err) {
+        console.error("Failed to send message:", err);
+      }
+
+      inputEl.value = "";
+    }
+
+    // Listen for Socket.IO messages
+    socket.on("chat message", (msg) => {
+      addMessage(msg);
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected with ID:", socket.id);
+    });
+
+    // Load previous messages
+    fetchMessages();
+  </script>
+</body>
+</html>
